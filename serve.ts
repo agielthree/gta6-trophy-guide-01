@@ -1,17 +1,19 @@
-// A tiny static server for app/ (Node 22, standard library only), so the guide can be run locally without a
-// build step: `node serve.ts` serves app/ on http://localhost:8080 (`--port <n>` for another port). It sends the MIME
-// types a browser needs, refuses any path outside app/, and otherwise does nothing clever: this is a development
-// convenience, not a web server for the internet.
+// A small static server for app/ (Node 22, standard library only), so the
+// guide can be tried locally without a build step: `node serve.ts` serves app/
+// on http://localhost:8080 (`--port <n>` picks another port). It answers with
+// the MIME types a browser needs, refuses every path that escapes app/, and
+// otherwise does nothing clever — a development convenience, not a web server
+// for the internet.
 import { createReadStream, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('./app', import.meta.url)));
-const args = process.argv.slice(2);
-const portIndex = args.indexOf('--port');
-const requested = portIndex === -1 ? 8080 : Number(args[portIndex + 1]);
-const port = Number.isInteger(requested) && requested > 0 && requested < 65536 ? requested : 8080;
+const argv = process.argv.slice(2);
+const portFlag = argv.indexOf('--port');
+const wanted = portFlag === -1 ? 8080 : Number(argv[portFlag + 1]);
+const port = Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
 
 const MIME: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -28,6 +30,10 @@ const MIME: Record<string, string> = {
   '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json',
 };
+
+function mimeFor(file: string): string {
+  return MIME[extname(file).toLowerCase()] ?? 'application/octet-stream';
+}
 
 createServer((request, response) => {
   const url = new URL(request.url ?? '/', 'http://localhost');
@@ -54,7 +60,7 @@ createServer((request, response) => {
     return;
   }
   response.writeHead(200, {
-    'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
+    'content-type': mimeFor(file),
     'content-length': size,
     'cache-control': 'no-store',
   });

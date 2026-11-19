@@ -3,23 +3,126 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GTA VI trophy checklist</title>
+<title>Leonida Ledger — GTA VI Trophy Guide &amp; Tracker</title>
+<meta name="description" content="An offline guide and tracker for all 55 PlayStation 5 trophies of Grand Theft Auto VI: official names, descriptions and grades, a roadmap to the platinum, missable flags, and a guide to each trophy that cites its sources.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <h1>GTA VI trophy checklist</h1>
-  <p id="progress">0 of 55 earned</p>
+<header class="top">
+  <div class="brand">
+    <p class="kicker">Grand Theft Auto VI &middot; PlayStation 5 &middot; released 19 November 2026</p>
+    <h1>Leonida Ledger</h1>
+    <p class="tagline">The offline trophy guide &amp; tracker for all 55 trophies — official list, roadmap to the platinum, and a cited guide for every trophy.</p>
+  </div>
+  <div class="progress-card" id="progressCard" aria-label="Progress">
+    <p class="big-number"><span id="earnedCount">0</span><span class="of"> / 55</span></p>
+    <p class="progress-label" id="progressLabel">earned</p>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="55" aria-valuenow="0" id="progressBar"><div class="fill" id="progressFill"></div></div>
+    <p class="grade-line" id="gradeLine"></p>
+  </div>
 </header>
-<div class="controls">
-  <label>Grade <select id="grade"><option value="all">All</option><option value="platinum">Platinum</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="bronze">Bronze</option></select></label>
-  <button id="export" type="button">Export progress</button>
-  <label class="import">Import progress <input id="import" type="file" accept="application/json"></label>
-</div>
-<table>
-  <thead><tr><th>Earned</th><th>Trophy</th><th>Grade</th><th>How to get it</th></tr></thead>
-  <tbody id="rows"></tbody>
-</table>
-<script type="module" src="app.js"></script>
+
+<nav class="tabs" aria-label="Guide sections">
+  <button type="button" class="tab active" data-view="tracker" id="tab-tracker">Tracker</button>
+  <button type="button" class="tab" data-view="roadmap" id="tab-roadmap">Roadmap to Platinum</button>
+  <button type="button" class="tab" data-view="missables" id="tab-missables">Missables <span class="pill" id="missableCount"></span></button>
+  <button type="button" class="tab" data-view="about" id="tab-about">About the game &amp; sources</button>
+</nav>
+
+<section class="toolbar" id="toolbar" aria-label="Tracker controls">
+  <label class="search">Search
+    <input type="search" id="search" placeholder="Name, description or guide…" autocomplete="off">
+  </label>
+  <label>Kind
+    <select id="kindFilter">
+      <option value="all">All kinds</option>
+      <option value="story">Story</option>
+      <option value="side">Strangers &amp; side</option>
+      <option value="collectibles">Collectibles</option>
+      <option value="activities">Activities</option>
+      <option value="completion">Completion</option>
+      <option value="missable">Missable</option>
+      <option value="online">Online</option>
+    </select>
+  </label>
+  <label>Grade
+    <select id="gradeFilter">
+      <option value="all">All grades</option>
+      <option value="platinum">Platinum</option>
+      <option value="gold">Gold</option>
+      <option value="silver">Silver</option>
+      <option value="bronze">Bronze</option>
+    </select>
+  </label>
+  <label class="check"><input type="checkbox" id="hideEarned"> Hide earned</label>
+  <label class="check"><input type="checkbox" id="spoilerToggle"> Spoiler-free mode</label>
+  <span class="spacer"></span>
+  <button type="button" id="exportBtn">Export progress</button>
+  <label class="import-btn">Import progress <input type="file" id="importFile" accept="application/json,.json"></label>
+  <button type="button" id="resetBtn" title="Clear all earned ticks">Reset</button>
+</section>
+
+<main>
+  <section id="view-tracker" class="view">
+    <div class="layout">
+      <div class="list-col">
+        <p class="list-meta" id="listMeta"></p>
+        <ul class="trophy-list" id="trophyList"></ul>
+        <p class="empty" id="emptyState" hidden>No trophies match these filters. Try clearing the search or choosing another kind.</p>
+      </div>
+      <aside class="detail-col" id="detailPane" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section id="view-roadmap" class="view" hidden>
+    <div class="page">
+      <h2>Roadmap to the platinum</h2>
+      <p class="lede">Fifty-five trophies: 1 platinum, 2 gold, 6 silver, 46 bronze. The order below is built from the official descriptions alone — which trophies are story chapters and missions, which are side strands, which are collectibles and counted grinds. Work it stage by stage; the platinum pops when the other 54 are done.</p>
+      <div id="roadmapStages"></div>
+      <h3>How long is it?</h3>
+      <p>There is no honest hour count yet — the game released on 19 November 2026 and nobody has finished a full platinum run in public. Expect the story stages to take a normal campaign's length, and the counted grinds (250 stunts, 42 gold shooting-range medals, 100 WAiNK It locations) to take longer than the story itself. This is an estimate, not a measured time.</p>
+    </div>
+  </section>
+
+  <section id="view-missables" class="view" hidden>
+    <div class="page">
+      <h2>Missable trophies</h2>
+      <p class="lede">Eight trophies are flagged <strong>possibly missable</strong>. The flag comes only from reading the official description: it describes a one-off moment — a partner beside you, a single airport visit, a choice, a failure-then-success — rather than something you can repeat any time. None of these is confirmed missable in the game yet: the game released on 19 November 2026, and no guide has verified them in play. Treat the flag as a warning to do them early, not as a fact.</p>
+      <p class="lede">Everything else is safe. Story trophies cannot be missed — finish the chapter or mission and they pop. Collectibles, activities and counted grinds can all be done after the story, in free roam.</p>
+      <div id="missableList"></div>
+    </div>
+  </section>
+
+  <section id="view-about" class="view" hidden>
+    <div class="page">
+      <h2>About the game &amp; sources</h2>
+      <h3>Verified facts</h3>
+      <ul class="facts">
+        <li><strong>Release:</strong> Grand Theft Auto VI released on Thursday 19 November 2026, on PlayStation 5 and Xbox Series X|S. No PC version has been announced. <span class="src">Source: Rockstar Games; USA Today launch coverage, 19 Nov 2026.</span></li>
+        <li><strong>Setting:</strong> the state of Leonida — Rockstar's fictional Florida — with Vice City (its Miami) at the centre, plus the Leonida Keys, the Grassrivers wetlands, Mount Kalaga National Park, Port Gellhorn and Ambrosia. <span class="src">Source: Rockstar Games official page.</span></li>
+        <li><strong>Protagonists:</strong> Lucia Caminos, recently released from prison, and Jason Duval, a former soldier who fell in with drug runners in the Leonida Keys — partners in crime after an easy score goes wrong. Lucia is the series' first female lead in a mainline game. <span class="src">Source: Rockstar Games; Associated Press, 17 Nov 2026.</span></li>
+        <li><strong>The trophy list:</strong> 55 trophies — 1 platinum, 2 gold, 6 silver, 46 bronze — as PlayStation publishes them, listed by Exophase and PSNProfiles on 18 November 2026. The two lists agree on every name, description and grade. <span class="src">Source: Exophase; PSNProfiles.</span></li>
+        <li><strong>Online trophies:</strong> none. Every trophy in the official list is earned in single-player; there is no online trophy to chase. <span class="src">Source: the official list itself — no description mentions online play.</span></li>
+      </ul>
+      <h3>What is an estimate here?</h3>
+      <p>Every guide in this app is written in our own words from the official trophy description. Where a guide goes beyond the description — a likely place, a likely method, a difficulty rating, a missable flag — it says so, usually with the word <em>estimate</em>. The game is a day old; exact locations, mission layouts and trigger details will be pinned down as players map them, and this guide will be wrong in places. What is not an estimate: the trophy names, descriptions, grades and PSN counters, which come straight from the official list.</p>
+      <h3>Sources</h3>
+      <ul class="facts">
+        <li><a href="https://www.exophase.com/game/grand-theft-auto-vi-psn/trophies/">Exophase — Grand Theft Auto VI trophies</a> (names, descriptions, grades)</li>
+        <li><a href="https://psnprofiles.com/trophies/43531-grand-theft-auto-vi">PSNProfiles — Grand Theft Auto VI trophies</a> (grades, PSN progress counters, rarity)</li>
+        <li><a href="https://www.rockstargames.com/games/GTAVI">Rockstar Games — Grand Theft Auto VI</a> (setting, characters, release)</li>
+        <li><a href="https://www.usatoday.com/story/tech/gaming/2026/11/19/gta-6-live-updates--live/92811863007/">USA Today — GTA 6 launch live coverage</a> (release date, platforms)</li>
+      </ul>
+      <h3>Offline &amp; yours</h3>
+      <p>This guide is plain static files. It works with the network off, saves your progress in this browser only (localStorage), and never sends anything anywhere. Export your progress to a file to keep it or move it to another browser. No Rockstar Games logo, artwork or game screenshot is used anywhere in this guide — the look is our own.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Leonida Ledger — an unofficial, fan-made guide. Grand Theft Auto and Rockstar Games are trademarks of their owners; this guide is not affiliated with or endorsed by Rockstar Games. Trophy names, descriptions and grades are as PlayStation publishes them. Guides are original writing for this guide, citing their sources.</p>
+</footer>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
