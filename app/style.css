@@ -166,3 +166,17 @@ footer { padding: 18px 28px 28px; color: var(--ink-dim); font-size: 12.5px; bord
   .progress-card { text-align: left; }
   .brand h1 { font-size: 34px; }
 }
+
+/* Round 2: per-stage progress cards on the roadmap page. */
+.stage-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0 6px; }
+.stage-summary-headline { grid-column: 1 / -1; color: var(--ink-dim); font-size: 15px; margin: 0; }
+.stage-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.stage-card.stage-done { border-color: var(--good); }
+.stage-card h3 { font-size: 17px; margin: 0 0 4px; }
+.stage-card h3 .stage-num { color: var(--accent); }
+.stage-bar { height: 8px; background: #0b0f18; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); margin: 8px 0; }
+.stage-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); transition: width .25s ease; }
+.stage-next { font-weight: 700; font-size: 13.5px; margin: 6px 0 0; }
+.stage-remaining { color: var(--ink-dim); font-size: 13px; margin: 6px 0 0; }
+/* Round 2: the missable-verification note shown under a trophy's warning. */
+.verify-note { background: #101d2b; border: 1px solid #4a7ba6; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; margin: 10px 0; }

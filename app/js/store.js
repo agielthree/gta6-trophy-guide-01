@@ -56,3 +56,12 @@ export async function readImportFile(file) {
   if (!Array.isArray(names)) throw new Error('That file has no earned list in it.');
   return names.filter((n) => typeof n === 'string');
 }
+
+// Round 2: split an imported name list into trophies this guide knows and
+// names it does not, so the import can say what it skipped instead of
+// silently dropping unknown entries.
+export function summariseImport(names, known) {
+  const valid = names.filter((n) => known.has(n));
+  const unknown = names.filter((n) => !known.has(n));
+  return { valid, unknown };
+}

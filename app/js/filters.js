@@ -16,6 +16,13 @@ export function displayDescription(trophy, earned, spoilerOn) {
   return trophy.description;
 }
 
+// Round 2: search also covers the missable-verification notes, so a search
+// for "partner" or "VCIA" finds the missable trophies by their check text.
+export function searchHaystack(t) {
+  const check = t.missable_check ? ` ${t.missable_check.basis} ${t.missable_check.risk} ${t.missable_check.do_early}` : '';
+  return `${t.name} ${t.description} ${t.guide}${check}`;
+}
+
 export function applyFilters(trophies, state) {
   const query = state.search.trim().toLowerCase();
   return trophies.filter((t) => {
@@ -25,7 +32,7 @@ export function applyFilters(trophies, state) {
     if (state.grade !== 'all' && t.grade !== state.grade) return false;
     if (state.hideEarned && state.earned.has(t.name)) return false;
     if (query) {
-      const haystack = `${t.name} ${t.description} ${t.guide}`.toLowerCase();
+      const haystack = searchHaystack(t).toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;

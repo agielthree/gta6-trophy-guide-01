@@ -1,7 +1,7 @@
 // Renders every view of the guide: the progress header, the checklist with its
 // detail pane, the roadmap stages and the missables page. All text is built with
 // textContent (never innerHTML from data), so a trophy name can never break the page.
-import { GRADE_LABELS, KIND_LABELS, STAGE_INFO, gradeCounts, missableTrophies, trophiesInStage } from './data.js';
+import { GRADE_LABELS, KIND_LABELS, STAGE_INFO, gradeCounts, missableTrophies, nextUpInStage, stageSummary, trophiesInStage } from './data.js';
 import { applyFilters, displayDescription, displayName, spoilerHides } from './filters.js';
 
 function el(tag, className, text) {
@@ -102,6 +102,9 @@ export function renderDetail(doc, state) {
   if (trophy.missable && trophy.missable_note) {
     pane.append(el('p', 'warn-box', `⚠ ${trophy.missable_note}`));
   }
+  if (trophy.missable && trophy.missable_check) {
+    pane.append(el('p', 'verify-note', `Verified? No — not in play yet (game released 19 Nov 2026). Why it is flagged: ${trophy.missable_check.basis} Risk: ${trophy.missable_check.risk} Do it early: ${trophy.missable_check.do_early}`));
+  }
   pane.append(el('h3', null, 'Guide'));
   pane.append(el('p', null, trophy.guide));
   if (trophy.steps?.length) {
@@ -131,6 +134,7 @@ export function renderDetail(doc, state) {
 }
 
 export function renderRoadmap(doc, state) {
+  renderStageSummary(doc, state);
   const host = document.getElementById('roadmapStages');
   host.replaceChildren();
   for (const stage of [1, 2, 3, 4, 5]) {
@@ -154,6 +158,47 @@ export function renderRoadmap(doc, state) {
   }
 }
 
+// Round 2: the per-stage progress cards at the top of the roadmap page.
+// Each card shows earned/total, a percent bar, the next trophy to chase,
+// and the full list of trophies still left in that stage.
+export function renderStageSummary(doc, state) {
+  const host = document.getElementById('stageSummary');
+  if (!host) return;
+  host.replaceChildren();
+  const summaries = stageSummary(doc, state.earned);
+  const overall = summaries.reduce((acc, s) => acc + s.earned, 0);
+  const overallTotal = summaries.reduce((acc, s) => acc + s.total, 0);
+  const headline = el('p', 'stage-summary-headline',
+    overall === overallTotal
+      ? 'Every stage is complete — the platinum is yours.'
+      : `${overall} of ${overallTotal} trophies earned across 5 stages. The stage furthest behind is the one to work next.`);
+  host.append(headline);
+  for (const s of summaries) {
+    const card = el('article', 'stage-card');
+    if (s.done) card.classList.add('stage-done');
+    const heading = el('h3');
+    heading.append(el('span', 'stage-num', `Stage ${s.stage} — `));
+    heading.append(document.createTextNode(s.title));
+    card.append(heading);
+    card.append(el('p', 'stage-meta', `${s.earned}/${s.total} earned · ${s.percent}%${s.done ? ' · complete' : ''}`));
+    const bar = el('div', 'stage-bar');
+    bar.setAttribute('role', 'progressbar');
+    bar.setAttribute('aria-valuemin', '0');
+    bar.setAttribute('aria-valuemax', String(s.total));
+    bar.setAttribute('aria-valuenow', String(s.earned));
+    const fill = el('div', 'stage-fill');
+    fill.style.width = `${s.percent}%`;
+    bar.append(fill);
+    card.append(bar);
+    const next = nextUpInStage(doc, s.stage, state.earned);
+    card.append(el('p', 'stage-next', next ? `Next up: ${next}` : 'Nothing left in this stage.'));
+    if (s.remaining.length) {
+      card.append(el('p', 'stage-remaining', `Still to do (${s.remaining.length}): ${s.remaining.join(' · ')}`));
+    }
+    host.append(card);
+  }
+}
+
 export function renderMissables(doc, state) {
   const host = document.getElementById('missableList');
   host.replaceChildren();
@@ -165,6 +210,9 @@ export function renderMissables(doc, state) {
     section.append(el('p', 'stage-meta', `${GRADE_LABELS[t.grade]} · ${KIND_LABELS[t.kind]} · Difficulty ${difficultyStars(t.difficulty)}`));
     section.append(el('p', 'official', t.description));
     section.append(el('p', 'warn-box', `⚠ ${t.missable_note ?? 'Flagged from the official description only — not confirmed in play.'}`));
+    if (t.missable_check) {
+      section.append(el('p', 'verify-note', `Verification — basis: ${t.missable_check.basis} Risk: ${t.missable_check.risk} Do it early: ${t.missable_check.do_early} (Not verified in play — the game released 19 Nov 2026.)`));
+    }
     section.append(el('p', null, t.guide));
     host.append(section);
   }

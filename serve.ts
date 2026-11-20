@@ -44,6 +44,12 @@ createServer((request, response) => {
     response.writeHead(400).end('bad request');
     return;
   }
+  // Round 2: a tiny health endpoint for smoke tests (`curl localhost:8080/health`),
+  // so a script can tell the server is up without fetching the whole guide.
+  if (pathname === '/health') {
+    response.writeHead(200, { 'content-type': 'application/json' }).end('{"ok":true}');
+    return;
+  }
   if (pathname.endsWith('/')) pathname += 'index.html';
   const file = resolve(join(root, normalize(pathname)));
   if (file !== root && !file.startsWith(root + sep)) {

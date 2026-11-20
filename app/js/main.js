@@ -2,7 +2,7 @@
 // toolbar and tabs, and renders the tracker. No network request happens here
 // beyond fetching the app's own data file.
 import { loadGuide } from './data.js';
-import { exportFile, loadEarned, loadSettings, readImportFile, saveEarned, saveSettings } from './store.js';
+import { exportFile, loadEarned, loadSettings, readImportFile, saveEarned, saveSettings, summariseImport } from './store.js';
 import { renderDetail, renderList, renderMissables, renderProgress, renderRoadmap } from './render.js';
 
 const state = {
@@ -91,9 +91,11 @@ function bindToolbar() {
     try {
       const names = await readImportFile(file);
       const known = new Set(state.doc.trophies.map((t) => t.name));
-      state.earned = new Set(names.filter((n) => known.has(n)));
+      const { valid, unknown } = summariseImport(names, known);
+      state.earned = new Set(valid);
       saveEarned(state.earned);
       renderAll();
+      if (unknown.length) alert(`${unknown.length} name${unknown.length === 1 ? '' : 's'} in that file are not trophies in this guide and were skipped.`);
     } catch (error) {
       alert(`Could not import that file: ${error.message}`);
     }
@@ -111,6 +113,13 @@ function bindTabs() {
   for (const tab of document.querySelectorAll('.tab')) {
     tab.addEventListener('click', () => switchView(tab.dataset.view));
   }
+  // Round 2: keys 1–4 jump between the four sections without a mouse.
+  const views = ['tracker', 'roadmap', 'missables', 'about'];
+  document.addEventListener('keydown', (event) => {
+    if (event.target.matches('input, select, textarea')) return;
+    const index = Number(event.key) - 1;
+    if (index >= 0 && index < views.length) switchView(views[index]);
+  });
 }
 
 async function boot() {

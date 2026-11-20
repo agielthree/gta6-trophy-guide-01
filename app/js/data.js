@@ -52,3 +52,32 @@ export function gradeCounts(doc) {
   for (const t of doc.trophies) counts[t.grade] += 1;
   return counts;
 }
+
+// Round 2: one summary row per roadmap stage, computed from the store's
+// earned set — total, earned, percent, and the names still left to do, so
+// the roadmap page can show progress per stage instead of only a bare
+// earned/total count inside each stage's paragraph.
+export function stageSummary(doc, earned) {
+  return [1, 2, 3, 4, 5].map((stage) => {
+    const trophies = trophiesInStage(doc, stage);
+    const remaining = trophies.filter((t) => !earned.has(t.name)).map((t) => t.name);
+    const done = trophies.length - remaining.length;
+    return {
+      stage,
+      title: STAGE_INFO[stage].title,
+      total: trophies.length,
+      earned: done,
+      percent: trophies.length ? Math.round((done / trophies.length) * 100) : 0,
+      remaining,
+      done: remaining.length === 0,
+    };
+  });
+}
+
+// The next trophy to chase in a stage: the first one not earned yet, or
+// null when the stage is complete. Used for the "next up" line under each
+// stage summary card.
+export function nextUpInStage(doc, stage, earned) {
+  const next = trophiesInStage(doc, stage).find((t) => !earned.has(t.name));
+  return next ? next.name : null;
+}

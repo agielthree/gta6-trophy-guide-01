@@ -13,7 +13,7 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { cpSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-frontend.ts';
@@ -33,6 +33,29 @@ if (existsSync(shotsDir)) {
   if (shots.length > 4) throw new Error(`screenshots/ holds ${shots.length} files; the gate allows at most 4`);
 }
 
+// Round 2: validate the guide data before anything is copied, so a broken
+// trophy list fails here with a readable message instead of shipping a
+// dossier built from bad data. The counts below are the official list's
+// shape (55 trophies; stages of 13/7/19/14/2; 8 possibly-missable flags),
+// and every missable trophy must carry its round-2 verification note.
+const guidePath = join(appDir, 'data', 'trophies.json');
+const guide = JSON.parse(readFileSync(guidePath, 'utf-8'));
+const guideTrophies = guide.trophies ?? [];
+if (guideTrophies.length !== 55) throw new Error(`trophies.json holds ${guideTrophies.length} trophies; the official list has 55`);
+const stageTotals = [1, 2, 3, 4, 5].map((stage) => guideTrophies.filter((t) => t.stage === stage).length);
+const expectedStages = [13, 7, 19, 14, 2];
+stageTotals.forEach((total, i) => {
+  if (total !== expectedStages[i]) throw new Error(`stage ${i + 1} holds ${total} trophies; the roadmap expects ${expectedStages[i]}`);
+});
+const missableTrophies = guideTrophies.filter((t) => t.missable);
+if (missableTrophies.length !== 8) throw new Error(`trophies.json flags ${missableTrophies.length} missable trophies; the guide expects 8`);
+for (const t of missableTrophies) {
+  if (!t.missable_check || t.missable_check.verified_in_play !== false || !t.missable_check.do_early) {
+    throw new Error(`missable trophy ${t.name} is missing its verification note (missable_check)`);
+  }
+}
+console.log(`guide data OK: 55 trophies, stages ${stageTotals.join('/')}, ${missableTrophies.length} possibly missable`);
+
 mkdirSync(out, { recursive: true });
 cpSync(appDir, join(out, 'app'), { recursive: true });
 mkdirSync(join(out, 'screenshots'), { recursive: true });
@@ -47,3 +70,11 @@ writeFileSync(
   join(out, 'dossier.json'),
   buildDossier(out, { text_max_bytes: 163840, screenshots: { max: 4, max_bytes: 262144 }, app_max_files: 993, app_max_bytes: 50331648 }),
 );
+
+// Round 2, second pass: confirm the dossier actually landed and say how
+// big it is, so a silent write failure cannot pass as a good build.
+const dossierPath = join(out, 'dossier.json');
+const dossierRaw = readFileSync(dossierPath);
+if (dossierRaw.length === 0) throw new Error(`dossier.json at ${dossierPath} is empty`);
+const dossierSections = Object.keys(JSON.parse(dossierRaw.toString('utf-8'))).sort().join(', ');
+console.log(`dossier OK: ${dossierRaw.length} bytes, sections: ${dossierSections}`);

@@ -1,1 +1,3 @@
 out/
+out2/
+# Local build outputs are never committed: out/ is the main.ts output dir, out2/ was a stray duplicate removed in round 2.
